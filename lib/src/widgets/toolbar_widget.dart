@@ -5,9 +5,9 @@ import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_picker_plus/picker.dart';
 import 'package:html_editor_enhanced/html_editor.dart';
 import 'package:html_editor_enhanced/utils/utils.dart';
-import 'package:numberpicker/numberpicker.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 /// Toolbar widget class
@@ -2540,63 +2540,94 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
               if (proceed) {
                 var currentRows = 1;
                 var currentCols = 1;
-                await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return PointerInterceptor(
-                        child: StatefulBuilder(builder:
-                            (BuildContext context, StateSetter setState) {
-                          return AlertDialog(
-                            title: Text('Insert Table'),
-                            scrollable: true,
-                            content: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  NumberPicker(
-                                    value: currentRows,
-                                    minValue: 1,
-                                    maxValue: 10,
-                                    onChanged: (value) =>
-                                        setState(() => currentRows = value),
-                                  ),
-                                  Text('x'),
-                                  NumberPicker(
-                                    value: currentCols,
-                                    minValue: 1,
-                                    maxValue: 10,
-                                    onChanged: (value) =>
-                                        setState(() => currentCols = value),
-                                  ),
-                                ]),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () async {
-                                  if (kIsWeb) {
-                                    widget.controller.insertTable(
-                                        '${currentRows}x$currentCols');
-                                  } else {
-                                    await widget.controller.editorController!
-                                        .evaluateJavascript(
-                                            source:
-                                                "\$('#summernote-2').summernote('insertTable', '${currentRows}x$currentCols');");
-                                  }
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text('OK'),
-                              )
-                            ],
-                          );
-                        }),
-                      );
-                    });
+
+                await Picker(
+                  adapter: NumberPickerAdapter(data: [
+                    const NumberPickerColumn(begin: 0, end: 100, jump: 5),
+                    const NumberPickerColumn(begin: 0, end: 60),
+                  ]),
+                  delimiter: [
+                    PickerDelimiter(
+                      child: Container(
+                        width: 30.0,
+                        alignment: Alignment.center,
+                        child: const Text(':'),
+                      ),
+                      column: 1,
+                    ),
+                  ],
+                  title: const Text('Select Time'),
+                  onConfirm: (Picker picker, List<int> value) async {
+                    currentRows = picker.getSelectedValues()[0];
+                    print('Selected: ${picker.getSelectedValues()}');
+                    if (kIsWeb) {
+                      widget.controller
+                          .insertTable('${currentRows}x$currentCols');
+                    } else {
+                      await widget.controller.editorController!.evaluateJavascript(
+                          source:
+                              "\$('#summernote-2').summernote('insertTable', '${currentRows}x$currentCols');");
+                    }
+                  },
+                ).showModal(context);
+
+                // await showDialog(
+                //     context: context,
+                //     builder: (BuildContext context) {
+                //       return PointerInterceptor(
+                //         child: StatefulBuilder(builder:
+                //             (BuildContext context, StateSetter setState) {
+                //           return AlertDialog(
+                //             title: Text('Insert Table'),
+                //             scrollable: true,
+                //             content: Row(
+                //                 mainAxisSize: MainAxisSize.min,
+                //                 mainAxisAlignment:
+                //                     MainAxisAlignment.spaceAround,
+                //                 children: [
+                //                   // NumberPicker(
+                //                   //   value: currentRows,
+                //                   //   minValue: 1,
+                //                   //   maxValue: 10,
+                //                   //   onChanged: (value) =>
+                //                   //       setState(() => currentRows = value),
+                //                   // ),
+                //                   // Text('x'),
+                //                   // NumberPicker(
+                //                   //   value: currentCols,
+                //                   //   minValue: 1,
+                //                   //   maxValue: 10,
+                //                   //   onChanged: (value) =>
+                //                   //       setState(() => currentCols = value),
+                //                   // ),
+                //                 ]),
+                //             actions: [
+                //               TextButton(
+                //                 onPressed: () {
+                //                   Navigator.of(context).pop();
+                //                 },
+                //                 child: Text('Cancel'),
+                //               ),
+                //               TextButton(
+                //                 onPressed: () async {
+                //                   if (kIsWeb) {
+                //                     widget.controller.insertTable(
+                //                         '${currentRows}x$currentCols');
+                //                   } else {
+                //                     await widget.controller.editorController!
+                //                         .evaluateJavascript(
+                //                             source:
+                //                                 "\$('#summernote-2').summernote('insertTable', '${currentRows}x$currentCols');");
+                //                   }
+                //                   Navigator.of(context).pop();
+                //                 },
+                //                 child: Text('OK'),
+                //               )
+                //             ],
+                //           );
+                //         }),
+                //       );
+                //     });
               }
             }
             if (t.getIcons()[index].icon == Icons.horizontal_rule) {
